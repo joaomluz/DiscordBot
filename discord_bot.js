@@ -97,6 +97,10 @@ try{
 	aliases = {};
 }
 
+var games = require("./games.json");
+
+var currentKiller, currentAngel, currentDetective = 0;
+
 commands = {	// all commands list below
 	"alias": {
 		usage: "<name> <actual command>",
@@ -183,6 +187,122 @@ commands = {	// all commands list below
 			msg.channel.send("Message saved.")
 		}
 	},
+    "k": {
+		process: function(bot,msg,suffix){ 
+			var msgAuthorUsername = msg.author.username;
+			var msgAuthorId = msg.author.id;
+
+
+
+			var target;
+
+			var args = suffix.split(' ');
+			args.forEach(player => {
+
+				if(player.startsWith('<@')){
+					var playerid = player.substr(3,player.length-4);
+					target = playerid;
+				}
+			});
+
+
+
+			console.log(msgAuthor);
+		
+		}
+		
+    },
+
+	"s": {		
+		process: function(bot,msg,suffix){ 
+
+			var msgAuthor = msg.author;
+			var args = suffix.split(' ');
+			var players = [];
+
+			games.currentCitzens = players;
+
+			args.forEach(player => {
+
+				if(player.startsWith('<@')){
+					var playerid = player.substr(3,player.length-4);
+					players.push(playerid);
+				}
+			});
+
+
+			if (games.currentRound > 0) {
+				msg.channel.send("Ops.. Já existe um Jogo em andamento nesse servidor. Digite !reset para acabar com o jogo atual.");
+				return true;
+			}
+
+			games.currentPlayers = players;
+
+			const killer = players[Math.floor(Math.random() * players.length)];
+			games.currentKillers = killer;
+			players = players.filter(item => ![killer].includes(item));
+
+
+			const angel = players[Math.floor(Math.random() * players.length)];
+			games.currentAngels = angel;
+			players = players.filter(item => ![angel].includes(item));
+
+			const detective = players[Math.floor(Math.random() * players.length)];
+			games.currentDetectives = detective;
+			players = players.filter(item => ![detective].includes(item));
+
+			games.currentCitzens = players;
+
+			games.currentRound++;
+
+			fs.writeFile("./games.json",JSON.stringify(games,null,2), (err) => {
+				if(err) console.error(err);
+			});
+
+			bot.users.get(killer).send(':dagger: Você é o assasino digite aqui: "!k @nome_usuario <Descreva_a_Morte (opcional)>" para tentar matar alguém! :dagger: ');
+			bot.users.get(angel).send(':angel:  Você é o anjo digite aqui: "!s @nome_usuario" para tentar salvar alguém! :angel: ');
+			bot.users.get(detective).send(':man_police_officer: Você é o detetive digite aqui: "c @nome_usuario" para identificar o possível assasino! :man_police_officer:');
+
+			var words = ['tenebroso', 'sangue', 'noite', 'calafrio', 'sozinho' ];
+			const roundCheckWord = words[Math.floor(Math.random() * words.length)];
+
+			players.forEach(element => {
+				bot.users.get(element).send(':man: Você é o cidadão comum digite aqui: "!p ' + roundCheckWord + '" para prosseguir a rodada. :man:');
+			});
+
+			msg.channel.send("A cidade dorme.. mas há um assassino entre nós..");
+		}
+	},
+	"endgame": {
+        usage: "<message>",
+        description: "Bot sends message",
+        process: function(bot,msg,suffix){ 
+			
+			var gameDefault = {
+				"currentPlayers": [],
+				"currentKillers": "",
+				"currentAngels": "",
+				"currentDetectives": "",
+				"currentCitzens": [],
+				"currentDeads": 0,
+				"round": {
+				  "playersReady": 0,
+				  "killerTarget": null,
+				  "angelTarget": null,
+				  "DetectiveTarget": null,
+				  "voting": false
+				}
+			  };
+			
+			fs.writeFile("./games.json",JSON.stringify(gameDefault,null,2), (err) => {
+				if(err) console.error(err);
+			});	
+			
+			msg.channel.send("Jogo terminado.");
+
+		}
+    },
+
 	"eval": {
 		usage: "<command>",
 		description: 'Executes arbitrary javascript in the bot process. User must have "eval" permission.',
@@ -287,6 +407,13 @@ bot.on("disconnected", function () {
 	process.exit(1); //exit node.js with an error
 
 });
+
+function sendMessageToUser(author, msg) {
+	msg.author.send(msg);
+}
+
+
+
 
 function checkMessageForCommand(msg, isEdit) {
 	//check if message is a command

@@ -1,0 +1,15 @@
+{
+  "currentPlayers": [],
+  "currentKillers": "",
+  "currentAngels": "",
+  "currentDetectives": "",
+  "currentCitzens": [],
+  "currentDeads": 0,
+  "round": {
+    "playersReady": 0,
+    "killerTarget": null,
+    "angelTarget": null,
+    "DetectiveTarget": null,
+    "voting": false
+  }
+}
